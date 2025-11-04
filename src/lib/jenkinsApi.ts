@@ -218,8 +218,21 @@ pipeline {
                 sh '''
                     . venv/bin/activate
                     if [ -d "tests" ]; then
-                        coverage run -m unittest discover -s tests -p "test_*.py"
-                        coverage xml -o coverage.xml
+                        # Check if test_*.py OR sample_*.py files exist
+                        if ls tests/test_*.py 1> /dev/null 2>&1 || ls tests/sample_*.py 1> /dev/null 2>&1; then
+                            # Run coverage for test_*.py files if they exist
+                            if ls tests/test_*.py 1> /dev/null 2>&1; then
+                                coverage run -m unittest discover -s tests -p "test_*.py"
+                            fi
+                            # Run coverage for sample_*.py files if they exist (append mode)
+                            if ls tests/sample_*.py 1> /dev/null 2>&1; then
+                                coverage run -a -m unittest discover -s tests -p "sample_*.py"
+                            fi
+                            coverage xml -o coverage.xml
+                        else
+                            echo "⚠️ No test_*.py or sample_*.py files found in tests/ directory."
+                            echo "<?xml version='1.0'?><coverage></coverage>" > coverage.xml
+                        fi
                     else
                         echo "⚠️ No tests/ directory found. Skipping unit tests and coverage."
                         echo "<?xml version='1.0'?><coverage></coverage>" > coverage.xml
