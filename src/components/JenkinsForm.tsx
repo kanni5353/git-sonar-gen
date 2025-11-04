@@ -77,9 +77,7 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
       }
     });
 
-    if (!hasValidEmail) {
-      newErrors.emails = emailErrors;
-    } else if (emailErrors.some((err) => err !== "")) {
+    if (!hasValidEmail || emailErrors.some((err) => err !== "")) {
       newErrors.emails = emailErrors;
     }
 
