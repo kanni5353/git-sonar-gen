@@ -49,9 +49,9 @@ const Index = () => {
         });
       }
 
-      // Trigger build
+      // Trigger build with parameters
       setStatus("building");
-      const buildResult = await jenkinsApi.triggerBuild(repoName);
+      const buildResult = await jenkinsApi.triggerBuild(repoName, repoUrlInput, emailInput);
       
       if (buildResult.success) {
         setBuildNumber(buildResult.buildNumber);
