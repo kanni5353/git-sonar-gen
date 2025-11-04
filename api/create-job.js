@@ -95,10 +95,8 @@ pipeline {
                         sh '''
                             . venv/bin/activate
                             export PATH=
-${SONAR_SCANNER_PATH}:
-$PATH
-                            sonar-scanner -Dsonar.login=
-$SONAR_TOKEN
+${SONAR_SCANNER_PATH}:\$PATH
+                            sonar-scanner -Dsonar.login=\$SONAR_TOKEN
                         '''
                     }
                 }
@@ -111,30 +109,30 @@ $SONAR_TOKEN
                     def projectKey = sh(script: "grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2", returnStdout: true).trim()
                     def projectName = sh(script: "grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2", returnStdout: true).trim()
 
-                    def safeWorkspace = sh(script: 'echo ${WORKSPACE} | tr " " "_"', returnStdout: true).trim()
-                    sh "mkdir -p ${safeWorkspace}/temp_results"
-                    def jsonFile = "${safeWorkspace}/temp_results/sonar_results.json"
+                    def safeWorkspace = sh(script: 'echo \${WORKSPACE} | tr " " "_"', returnStdout: true).trim()
+                    sh "mkdir -p \${safeWorkspace}/temp_results"
+                    def jsonFile = "\${safeWorkspace}/temp_results/sonar_results.json"
 
-                    echo "Using project key: ${projectKey}"
+                    echo "Using project key: \${projectKey}"
                     sleep 10
 
                     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
                         sh """
-                            curl -u ${SONAR_TOKEN}:
-                            "${SONAR_HOST_URL}/api/measures/component?component=${projectKey}&metricKeys=
-code_smells,bugs,vulnerabilities,coverage,line_coverage,branch_coverage,
-duplicated_lines_density,duplicated_blocks,duplicated_lines,duplicated_files,
-sqale_index,sqale_rating,sqale_debt_ratio,
-reliability_rating,security_rating,security_review_rating,
-security_hotspots,security_hotspots_reviewed,
-complexity,cognitive_complexity,
-comment_lines,comment_lines_density,
-ncloc,lines,functions,classes,statements,files,
-tests,test_errors,test_failures,skipped_tests,test_success_density,
-alert_status"
-                            -o "${jsonFile}"
+                            curl -u \${SONAR_TOKEN}: \
+                            "\${SONAR_HOST_URL}/api/measures/component?component=\${projectKey}&metricKeys=\
+code_smells,bugs,vulnerabilities,coverage,line_coverage,branch_coverage,\
+duplicated_lines_density,duplicated_blocks,duplicated_lines,duplicated_files,\
+sqale_index,sqale_rating,sqale_debt_ratio,\
+reliability_rating,security_rating,security_review_rating,\
+security_hotspots,security_hotspots_reviewed,\
+complexity,cognitive_complexity,\
+comment_lines,comment_lines_density,\
+ncloc,lines,functions,classes,statements,files,\
+tests,test_errors,test_failures,skipped_tests,test_success_density,\
+alert_status" \
+                            -o "\${jsonFile}"
 
-                            if [ ! -s "${jsonFile}" ]; then
+                            if [ ! -s "\${jsonFile}" ]; then
                                 echo "ERROR: Empty response from SonarQube API"
                                 exit 1
                             fi
@@ -142,17 +140,17 @@ alert_status"
                     }
 
                     echo "SonarQube JSON contents:";
-                    sh "cat ${jsonFile}"
+                    sh "cat \${jsonFile}"
 
                     echo "Syncing to MongoDB..."
                     sh """
                         . /home/ubuntu/mongoenv/bin/activate
-                        export PROJECT_KEY="${projectKey}"
-                        export PROJECT_NAME="${projectName}"
-                        export MONGO_URI="${MONGO_URI}"
-                        export MONGO_DB="${MONGO_DB}"
-                        export MONGO_COLLECTION="${MONGO_COLLECTION}"
-                        export SONAR_JSON="${jsonFile}"
+                        export PROJECT_KEY="\${projectKey}"
+                        export PROJECT_NAME="\${projectName}"
+                        export MONGO_URI="\${MONGO_URI}"
+                        export MONGO_DB="\${MONGO_DB}"
+                        export MONGO_COLLECTION="\${MONGO_COLLECTION}"
+                        export SONAR_JSON="\${jsonFile}"
 
                         python3 /home/ubuntu/sync_to_mongo.py
                     """
@@ -165,15 +163,14 @@ alert_status"
                 echo "🤖 Running AI Suggestion Generator..."
                 sh '''
                     . /home/ubuntu/mongoenv/bin/activate
-                    export SONAR_HOST_URL=${SONAR_HOST_URL}
-                    export SONAR_AUTH_TOKEN=${SONAR_AUTH_TOKEN}
-                    export SONAR_PROJECT_KEY=
-$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
-                    export MONGO_URI=${MONGO_URI}
-                    export MONGO_DB=${MONGO_DB}
-                    export MONGO_COLLECTION=${SUGGESTION_COLLECTION}
-                    export GEMINI_API_KEY=${GEMINI_API_KEY}
-                    export SONAR_JSON="${WORKSPACE}/temp_results/sonar_results.json"
+                    export SONAR_HOST_URL=\${SONAR_HOST_URL}
+                    export SONAR_AUTH_TOKEN=\${SONAR_AUTH_TOKEN}
+                    export SONAR_PROJECT_KEY=\$(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
+                    export MONGO_URI=\${MONGO_URI}
+                    export MONGO_DB=\${MONGO_DB}
+                    export MONGO_COLLECTION=\${SUGGESTION_COLLECTION}
+                    export GEMINI_API_KEY=\${GEMINI_API_KEY}
+                    export SONAR_JSON="\${WORKSPACE}/temp_results/sonar_results.json"
 
                     python3 /home/ubuntu/final_ai.py
                 '''
@@ -186,7 +183,7 @@ $(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
                     sh '''
                         . /home/ubuntu/mongoenv/bin/activate
                         pip install --quiet --disable-pip-version-check pandas
-                        export SONAR_JSON="${WORKSPACE}/temp_results/sonar_results.json"
+                        export SONAR_JSON="\${WORKSPACE}/temp_results/sonar_results.json"
                         python3 /home/ubuntu/generate_email_body.py
                     '''
                 }
@@ -199,8 +196,8 @@ $(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
             }
             steps {
                 script {
-                    def emailOutputFile = "${WORKSPACE}/temp_results/email_body.html"
-                    def buildUrl = "${env.BUILD_URL}"
+                    def emailOutputFile = "\${WORKSPACE}/temp_results/email_body.html"
+                    def buildUrl = "\${env.BUILD_URL}"
 
                     def sonarProps = readFile('sonar-project.properties')
                     def projectNameMatch = sonarProps.split('\\n').find { it.startsWith('sonar.projectName=') }
@@ -209,9 +206,9 @@ $(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
                     def emailBody = readFile(emailOutputFile)
 
                     emailext(
-                        subject: "✅ SonarQube Report - ${projectName} [Build #${BUILD_NUMBER}]",
+                        subject: "✅ SonarQube Report - \${projectName} [Build #\${BUILD_NUMBER}]",
                         mimeType: 'text/html',
-                        body: emailBody + "<br><br><a href='${buildUrl}'>🔍 View Console Output</a>",
+                        body: emailBody + "<br><br><a href='\${buildUrl}'>🔍 View Console Output</a>",
                         to: params.USER_EMAIL,
                         attachmentsPattern: 'ai_suggestions_report.xlsx'
                     )
@@ -231,10 +228,10 @@ $(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
 
         failure {
             script {
-                def buildUrl = "${env.BUILD_URL}"
+                def buildUrl = "\${env.BUILD_URL}"
                 emailext(
-                    subject: "❌ Jenkins Build Failed [Build #${BUILD_NUMBER}]",
-                    body: "Build failed. Please check Jenkins for details:<br><br><a href='${buildUrl}'>🔍 View Console Output</a>",
+                    subject: "❌ Jenkins Build Failed [Build #\${BUILD_NUMBER}]",
+                    body: "Build failed. Please check Jenkins for details:<br><br><a href='\${buildUrl}'>🔍 View Console Output</a>",
                     mimeType: 'text/html',
                     to: params.USER_EMAIL
                 )
@@ -248,3 +245,81 @@ $(grep '^sonar.projectKey=' sonar-project.properties | cut -d'=' -f2)
   <triggers/>
   <disabled>false</disabled>
 </flow-definition>`;
+}
+
+async function getCrumb() {
+  const crumbUrl = `${JENKINS_URL}/crumbIssuer/api/json`;
+  const response = await fetch(crumbUrl, {
+    headers: {
+      Authorization: basicAuthHeader(),
+    },
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`Crumb fetch failed: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
+    const { jobName, repoUrl, email } = body;
+
+    if (!jobName || !repoUrl || !email) {
+      return res.status(400).json({ error: 'jobName, repoUrl, and email are required' });
+    }
+
+    const jobConfig = generateJobConfig(repoUrl, email);
+    const crumb = await getCrumb().catch(() => null);
+
+    const headers = {
+      Authorization: basicAuthHeader(),
+      'Content-Type': 'application/xml',
+    };
+
+    if (crumb && crumb.crumbRequestField) {
+      headers[crumb.crumbRequestField] = crumb.crumb;
+    }
+
+    const encodedJobName = encodeURIComponent(jobName);
+    const createUrl = `${JENKINS_URL}/createItem?name=${encodedJobName}`;
+
+    const response = await fetch(createUrl, {
+      method: 'POST',
+      headers,
+      body: jobConfig,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to create job: ${response.status} ${errorText}`);
+    }
+
+    return res.status(200).json({ success: true, jobName });
+  } catch (error) {
+    console.error('create-job error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: String(error && error.message ? error.message : error) 
+    });
+  }
+}
