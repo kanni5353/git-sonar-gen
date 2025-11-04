@@ -1,110 +1,17 @@
-const JENKINS_URL = "http://13.61.15.150:8080";
+// api/create-job.js
+const JENKINS_URL = process.env.JENKINS_URL || "http://13.61.15.150:8080";
+const JENKINS_USER = process.env.JENKINS_USER || "vercel-deployer";
+const JENKINS_API_TOKEN = process.env.JENKINS_API_TOKEN || "11c91008d123dd22189e5e7fd20894ee5b";
 
-interface JenkinsJobConfig {
-  repoUrl: string;
-  email: string;
+function basicAuthHeader() {
+  const credentials = `${JENKINS_USER}:${JENKINS_API_TOKEN}`;
+  return `Basic ${Buffer.from(credentials).toString('base64')}`;
 }
 
-export const jenkinsApi = {
-  /**
-   * Check if a Jenkins job exists for the given repository
-   */
-  async checkJobExists(repoName: string): Promise<boolean> {
-    try {
-      const response = await fetch("/api/check-job", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ jobName: repoName }),
-      });
+function generateJobConfig(repoUrl, email) {
+  const repoName = repoUrl.split("/").slice(-1)[0].replace(".git", "");
 
-      if (!response.ok) {
-        throw new Error(`Failed to check job: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.exists;
-    } catch (error) {
-      console.error("Error checking job existence:", error);
-      return false;
-    }
-  },
-
-  /**
-   * Create a new Jenkins job with the provided configuration
-   */
-  async createJob(repoName: string, config: JenkinsJobConfig): Promise<boolean> {
-    try {
-      const response = await fetch("/api/create-job", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jobName: repoName,
-          repoUrl: config.repoUrl,
-          email: config.email,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to create job: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return data.success;
-    } catch (error) {
-      console.error("Error creating job:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Trigger a build for an existing Jenkins job with parameters
-   */
-  async triggerBuild(repoName: string, repoUrl: string, email: string): Promise<{ success: boolean; buildNumber?: number }> {
-    try {
-      const response = await fetch("/api/trigger", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jobName: repoName,
-          repoUrl,
-          email,
-          params: {
-            REPO_URL: repoUrl,
-            USER_EMAIL: email,
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `Failed to trigger build: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return { success: data.success, buildNumber: data.buildNumber };
-    } catch (error) {
-      console.error("Error triggering build:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Generate Jenkins job configuration XML with inline pipeline script
-   */
-  generateJobConfig(config: JenkinsJobConfig): string {
-    const { repoUrl, email } = config;
-
-    // Extract repository name from URL for display
-    const repoName = repoUrl.split("/").slice(-1)[0].replace(".git", "");
-
-    return `<?xml version='1.1' encoding='UTF-8'?>
+  return `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.40">
   <description>Automated CI/CD for ${repoName}</description>
   <keepDependencies>false</keepDependencies>
@@ -202,16 +109,16 @@ pipeline {
                     def projectName = sh(script: "grep '^sonar.projectName=' sonar-project.properties | cut -d'=' -f2", returnStdout: true).trim()
 
                     def safeWorkspace = sh(script: 'echo \\${WORKSPACE} | tr " " "_"', returnStdout: true).trim()
-                    sh "mkdir -p \${safeWorkspace}/temp_results"
-                    def jsonFile = "\${safeWorkspace}/temp_results/sonar_results.json"
+                    sh "mkdir -p \\${safeWorkspace}/temp_results"
+                    def jsonFile = "\\${safeWorkspace}/temp_results/sonar_results.json"
 
-                    echo "Using project key: \${projectKey}"
+                    echo "Using project key: \\${projectKey}"
                     sleep 10
 
                     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
                         sh """
-                            curl -u \${SONAR_TOKEN}: \\
-                            "\${SONAR_HOST_URL}/api/measures/component?component=\${projectKey}&metricKeys=\\
+                            curl -u \\${SONAR_TOKEN}: \\
+                            "\\${SONAR_HOST_URL}/api/measures/component?component=\\${projectKey}&metricKeys=\\
 code_smells,bugs,vulnerabilities,coverage,line_coverage,branch_coverage,\\
 duplicated_lines_density,duplicated_blocks,duplicated_lines,duplicated_files,\\
 sqale_index,sqale_rating,sqale_debt_ratio,\\
@@ -222,9 +129,9 @@ comment_lines,comment_lines_density,\\
 ncloc,lines,functions,classes,statements,files,\\
 tests,test_errors,test_failures,skipped_tests,test_success_density,\\
 alert_status" \\
-                            -o "\${jsonFile}"
+                            -o "\\${jsonFile}"
 
-                            if [ ! -s "\${jsonFile}" ]; then
+                            if [ ! -s "\\${jsonFile}" ]; then
                                 echo "ERROR: Empty response from SonarQube API"
                                 exit 1
                             fi
@@ -232,17 +139,17 @@ alert_status" \\
                     }
 
                     echo "SonarQube JSON contents:"
-                    sh "cat \${jsonFile}"
+                    sh "cat \\${jsonFile}"
 
                     echo "Syncing to MongoDB..."
                     sh """
                         . /home/ubuntu/mongoenv/bin/activate
-                        export PROJECT_KEY="\${projectKey}"
-                        export PROJECT_NAME="\${projectName}"
-                        export MONGO_URI="\${MONGO_URI}"
-                        export MONGO_DB="\${MONGO_DB}"
-                        export MONGO_COLLECTION="\${MONGO_COLLECTION}"
-                        export SONAR_JSON="\${jsonFile}"
+                        export PROJECT_KEY="\\${projectKey}"
+                        export PROJECT_NAME="\\${projectName}"
+                        export MONGO_URI="\\${MONGO_URI}"
+                        export MONGO_DB="\\${MONGO_DB}"
+                        export MONGO_COLLECTION="\\${MONGO_COLLECTION}"
+                        export SONAR_JSON="\\${jsonFile}"
 
                         python3 /home/ubuntu/sync_to_mongo.py
                     """
@@ -275,7 +182,7 @@ alert_status" \\
                     sh '''
                         . /home/ubuntu/mongoenv/bin/activate
                         pip install --quiet --disable-pip-version-check pandas
-                        export SONAR_JSON="\${WORKSPACE}/temp_results/sonar_results.json"
+                        export SONAR_JSON="\\${WORKSPACE}/temp_results/sonar_results.json"
                         python3 /home/ubuntu/generate_email_body.py
                     '''
                 }
@@ -288,19 +195,19 @@ alert_status" \\
             }
             steps {
                 script {
-                    def emailOutputFile = "\${WORKSPACE}/temp_results/email_body.html"
-                    def buildUrl = "\${env.BUILD_URL ?: "\${JENKINS_URL}job/\${JOB_NAME}/\${BUILD_NUMBER}/"}console"
+                    def emailOutputFile = "\\${WORKSPACE}/temp_results/email_body.html"
+                    def buildUrl = "\\${env.BUILD_URL}"
 
                     def sonarProps = readFile('sonar-project.properties')
-                    def projectNameMatch = sonarProps.split('\\n').find { it.startsWith('sonar.projectName=') }
+                    def projectNameMatch = sonarProps.split('\\\\n').find { it.startsWith('sonar.projectName=') }
                     def projectName = projectNameMatch ? projectNameMatch.split('=')[1].trim() : 'SonarQube Project'
 
                     def emailBody = readFile(emailOutputFile)
 
                     emailext(
-                        subject: "✅ SonarQube Report - \${projectName} [Build #\${BUILD_NUMBER}]",
+                        subject: "✅ SonarQube Report - \\${projectName} [Build #\\${BUILD_NUMBER}]",
                         mimeType: 'text/html',
-                        body: emailBody + "<br><br><a href='\${buildUrl}'>🔍 View Console Output</a>",
+                        body: emailBody + "<br><br><a href='\\${buildUrl}'>🔍 View Console Output</a>",
                         to: params.USER_EMAIL,
                         attachmentsPattern: 'ai_suggestions_report.xlsx'
                     )
@@ -320,10 +227,10 @@ alert_status" \\
 
         failure {
             script {
-                def buildUrl = "\${env.BUILD_URL ?: "\${JENKINS_URL}job/\${JOB_NAME}/\${BUILD_NUMBER}/"}console"
+                def buildUrl = "\\${env.BUILD_URL}"
                 emailext(
-                    subject: "❌ Jenkins Build Failed [Build #\${BUILD_NUMBER}]",
-                    body: "Build failed. Please check Jenkins for details:<br><br><a href='\${buildUrl}'>🔍 View Console Output</a>",
+                    subject: "❌ Jenkins Build Failed [Build #\\${BUILD_NUMBER}]",
+                    body: "Build failed. Please check Jenkins for details:<br><br><a href='\\${buildUrl}'>🔍 View Console Output</a>",
                     mimeType: 'text/html',
                     to: params.USER_EMAIL
                 )
@@ -337,20 +244,82 @@ alert_status" \\
   <triggers/>
   <disabled>false</disabled>
 </flow-definition>`;
-  },
+}
 
-  /**
-   * Extract repository name from GitHub URL
-   */
-  extractRepoName(repoUrl: string): string {
-    const parts = repoUrl.replace(/\.git$/, "").split("/");
-    return parts[parts.length - 1];
-  },
+async function getCrumb() {
+  const crumbUrl = `${JENKINS_URL}/crumbIssuer/api/json`;
+  const response = await fetch(crumbUrl, {
+    headers: {
+      Authorization: basicAuthHeader(),
+    },
+  });
 
-  /**
-   * Get Jenkins job URL
-   */
-  getJobUrl(repoName: string): string {
-    return `${JENKINS_URL}/job/${encodeURIComponent(repoName)}`;
-  },
-};
+  if (response.status === 404) {
+    return null; // Crumb issuer disabled
+  }
+
+  if (!response.ok) {
+    throw new Error(`Crumb fetch failed: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+export default async function handler(req, res) {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const body = req.body && typeof req.body === 'object' ? req.body : JSON.parse(req.body || '{}');
+    const { jobName, repoUrl, email } = body;
+
+    if (!jobName || !repoUrl || !email) {
+      return res.status(400).json({ error: 'jobName, repoUrl, and email are required' });
+    }
+
+    const jobConfig = generateJobConfig(repoUrl, email);
+    const crumb = await getCrumb().catch(() => null);
+
+    const headers = {
+      Authorization: basicAuthHeader(),
+      'Content-Type': 'application/xml',
+    };
+
+    if (crumb && crumb.crumbRequestField) {
+      headers[crumb.crumbRequestField] = crumb.crumb;
+    }
+
+    const encodedJobName = encodeURIComponent(jobName);
+    const createUrl = `${JENKINS_URL}/createItem?name=${encodedJobName}`;
+
+    const response = await fetch(createUrl, {
+      method: 'POST',
+      headers,
+      body: jobConfig,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to create job: ${response.status} ${errorText}`);
+    }
+
+    return res.status(200).json({ success: true, jobName });
+  } catch (error) {
+    console.error('create-job error:', error);
+    return res.status(500).json({ 
+      success: false, 
+      error: String(error && error.message ? error.message : error) 
+    });
+  }
+}
