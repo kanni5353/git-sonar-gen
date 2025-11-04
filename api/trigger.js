@@ -1,6 +1,12 @@
 // api/trigger.js
-}
+const JENKINS_URL = "http://13.61.15.150:8080";
+const JENKINS_USER = "vercel-deployer";
+const JENKINS_API_TOKEN = "11c91008d123dd22189e5e7fd20894ee5b";
 
+function basicAuthHeader() {
+  const credentials = `${JENKINS_USER}:${JENKINS_API_TOKEN}`;
+  return `Basic ${Buffer.from(credentials).toString('base64')}`;
+}
 
 async function fetchJson(url, options = {}) {
 const res = await fetch(url, options);
