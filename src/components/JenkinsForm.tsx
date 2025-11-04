@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, CheckCircle, Loader2 } from "lucide-react";
+import { AlertCircle, CheckCircle, Loader2, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface JenkinsFormProps {
@@ -11,14 +11,46 @@ interface JenkinsFormProps {
   isLoading: boolean;
 }
 
+const MAX_EMAILS = 5;
+
 export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
   const [repoUrl, setRepoUrl] = useState("");
-  const [email, setEmail] = useState("");
-  const [errors, setErrors] = useState<{ repoUrl?: string; email?: string }>({});
+  const [emails, setEmails] = useState<string[]>([""]);
+  const [errors, setErrors] = useState<{ repoUrl?: string; emails?: string[] }>({});
   const { toast } = useToast();
 
+  const addEmailField = () => {
+    if (emails.length < MAX_EMAILS) {
+      setEmails([...emails, ""]);
+    }
+  };
+
+  const removeEmailField = (index: number) => {
+    if (emails.length > 1) {
+      const newEmails = emails.filter((_, i) => i !== index);
+      setEmails(newEmails);
+      // Clear errors for removed field
+      if (errors.emails) {
+        const newEmailErrors = errors.emails.filter((_, i) => i !== index);
+        setErrors({ ...errors, emails: newEmailErrors });
+      }
+    }
+  };
+
+  const updateEmail = (index: number, value: string) => {
+    const newEmails = [...emails];
+    newEmails[index] = value;
+    setEmails(newEmails);
+    // Clear error for this field
+    if (errors.emails?.[index]) {
+      const newEmailErrors = [...(errors.emails || [])];
+      newEmailErrors[index] = "";
+      setErrors({ ...errors, emails: newEmailErrors });
+    }
+  };
+
   const validateForm = () => {
-    const newErrors: { repoUrl?: string; email?: string } = {};
+    const newErrors: { repoUrl?: string; emails?: string[] } = {};
 
     // GitHub URL validation
     const githubUrlPattern = /^https?:\/\/(www\.)?github\.com\/[\w-]+\/[\w.-]+\/?$/;
@@ -30,10 +62,23 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
 
     // Email validation
     const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email.trim()) {
-      newErrors.email = "Email address is required";
-    } else if (!emailPattern.test(email.trim())) {
-      newErrors.email = "Please enter a valid email address";
+    const emailErrors: string[] = [];
+    let hasValidEmail = false;
+
+    emails.forEach((email, index) => {
+      const trimmedEmail = email.trim();
+      if (!trimmedEmail) {
+        emailErrors[index] = "Email address is required";
+      } else if (!emailPattern.test(trimmedEmail)) {
+        emailErrors[index] = "Please enter a valid email address";
+      } else {
+        emailErrors[index] = "";
+        hasValidEmail = true;
+      }
+    });
+
+    if (!hasValidEmail || emailErrors.some((err) => err !== "")) {
+      newErrors.emails = emailErrors;
     }
 
     setErrors(newErrors);
@@ -52,7 +97,11 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
       return;
     }
 
-    await onSubmit(repoUrl.trim(), email.trim());
+    // Combine all emails into comma-separated string
+    const validEmails = emails.map((e) => e.trim()).filter((e) => e !== "");
+    const emailString = validEmails.join(",");
+
+    await onSubmit(repoUrl.trim(), emailString);
   };
 
   return (
@@ -90,26 +139,67 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-base">
-              Email Address
+            <Label htmlFor="email-0" className="text-base">
+              {emails.length === 1 ? "Email Address" : "Email Addresses"}
             </Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="your.email@example.com"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (errors.email) setErrors({ ...errors, email: undefined });
-              }}
-              className={errors.email ? "border-destructive" : ""}
-              disabled={isLoading}
-            />
-            {errors.email && (
-              <div className="flex items-center gap-2 text-sm text-destructive">
-                <AlertCircle className="h-4 w-4" />
-                <span>{errors.email}</span>
-              </div>
+            {emails.length > 1 && (
+              <p className="text-sm text-muted-foreground">
+                Additional recipients will also receive build reports
+              </p>
+            )}
+            <div className="space-y-3">
+              {emails.map((email, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="flex-1 space-y-2">
+                    {emails.length > 1 && (
+                      <Label htmlFor={`email-${index}`} className="text-sm text-muted-foreground">
+                        Email Address {index + 1}
+                      </Label>
+                    )}
+                    <Input
+                      id={`email-${index}`}
+                      type="email"
+                      placeholder={index === 0 ? "your.email@example.com" : "additional.email@example.com"}
+                      value={email}
+                      onChange={(e) => updateEmail(index, e.target.value)}
+                      className={errors.emails?.[index] ? "border-destructive" : ""}
+                      disabled={isLoading}
+                    />
+                    {errors.emails?.[index] && (
+                      <div className="flex items-center gap-2 text-sm text-destructive">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>{errors.emails[index]}</span>
+                      </div>
+                    )}
+                  </div>
+                  {emails.length > 1 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="mt-0.5 text-muted-foreground hover:text-destructive"
+                      onClick={() => removeEmailField(index)}
+                      disabled={isLoading}
+                      aria-label={`Remove email ${index + 1}`}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {emails.length < MAX_EMAILS && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-2"
+                onClick={addEmailField}
+                disabled={isLoading}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Another Email
+              </Button>
             )}
           </div>
 
