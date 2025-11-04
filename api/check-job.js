@@ -14,6 +14,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.setHeader('Content-Type', 'application/json');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
@@ -28,8 +29,10 @@ export default async function handler(req, res) {
     const jobName = body.jobName;
 
     if (!jobName) {
-      return res.status(400).json({ error: 'jobName is required' });
+      return res.status(400).json({ error: 'jobName is required', exists: false });
     }
+
+    console.log(`[check-job] Checking job: ${jobName}`);
 
     const encodedJobName = encodeURIComponent(jobName);
     const jobUrl = `${JENKINS_URL}/job/${encodedJobName}/api/json`;
@@ -42,9 +45,11 @@ export default async function handler(req, res) {
     });
 
     const exists = response.ok;
+    console.log(`[check-job] Job ${jobName} exists: ${exists}`);
+    
     return res.status(200).json({ exists });
   } catch (error) {
-    console.error('check-job error:', error);
+    console.error('[check-job] Error:', error);
     return res.status(500).json({ 
       exists: false, 
       error: String(error && error.message ? error.message : error) 
