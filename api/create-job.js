@@ -94,8 +94,7 @@ pipeline {
                     withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_TOKEN')]) {
                         sh '''
                             . venv/bin/activate
-                            export PATH=
-${SONAR_SCANNER_PATH}:\$PATH
+                            export PATH=\${SONAR_SCANNER_PATH}:\$PATH
                             sonar-scanner -Dsonar.login=\$SONAR_TOKEN
                         '''
                     }
