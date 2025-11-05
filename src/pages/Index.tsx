@@ -95,18 +95,18 @@ const Index = () => {
           <div className="max-w-4xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20 mb-4">
               <GitBranch className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Automated CI/CD Pipeline</span>
+              <span className="text-sm font-medium text-primary">Automated Code Quality Analysis</span>
             </div>
             
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-primary-foreground leading-tight">
-              Deploy with Jenkins,
+              Build with Jenkins,
               <br />
               <span className="text-primary-glow">Analyze with SonarQube</span>
             </h1>
             
             <p className="text-lg sm:text-xl text-primary-foreground/90 max-w-2xl mx-auto">
-              Automate your code quality analysis and deployment pipeline. 
-              Simply enter your GitHub repository and let our Jenkins automation handle the rest.
+              Automate your code quality analysis and testing pipeline. 
+              Simply enter your GitHub repository and receive detailed SonarQube reports with AI-powered suggestions.
             </p>
           </div>
         </div>

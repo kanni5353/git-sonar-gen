@@ -153,7 +153,7 @@ export const jenkinsApi = {
 
     return `<?xml version='1.1' encoding='UTF-8'?>
 <flow-definition plugin="workflow-job@2.40">
-  <description>Automated CI/CD for ${repoName}</description>
+  <description>Automated Code Quality Analysis for ${repoName}</description>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.model.ParametersDefinitionProperty>

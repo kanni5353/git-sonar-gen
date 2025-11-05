@@ -32,7 +32,7 @@ export const StatusDisplay = ({
         return {
           icon: <Loader2 className="h-8 w-8 animate-spin text-secondary" />,
           title: "Creating Jenkins Job",
-          description: "Setting up your CI/CD pipeline...",
+          description: "Setting up your analysis pipeline...",
           badge: <Badge className="bg-secondary/10 text-secondary">Creating</Badge>,
         };
       case "building":
@@ -46,7 +46,7 @@ export const StatusDisplay = ({
         return {
           icon: <CheckCircle className="h-8 w-8 text-success" />,
           title: "Build Successful!",
-          description: "Your project has been analyzed and deployed.",
+          description: "Your project has been analyzed successfully.",
           badge: <Badge className="bg-success/10 text-success">Success</Badge>,
         };
       case "error":
