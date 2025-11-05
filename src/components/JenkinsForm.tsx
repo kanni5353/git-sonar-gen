@@ -107,9 +107,9 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
   return (
     <Card className="w-full max-w-2xl shadow-card animate-slide-up">
       <CardHeader>
-        <CardTitle className="text-2xl">Deploy Your Repository</CardTitle>
+        <CardTitle className="text-2xl">Analyze Your Repository</CardTitle>
         <CardDescription>
-          Enter your GitHub repository and email to automate Jenkins CI/CD
+          Enter your GitHub repository and email to automate code quality analysis with SonarQube and AI-powered suggestions
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -218,7 +218,7 @@ export const JenkinsForm = ({ onSubmit, isLoading }: JenkinsFormProps) => {
             ) : (
               <>
                 <CheckCircle className="h-5 w-5" />
-                Deploy to Jenkins
+                Run Quality Analysis
               </>
             )}
           </Button>
