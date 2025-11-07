@@ -50,7 +50,7 @@ pipeline {
         SONAR_AUTH_TOKEN = credentials('sonarqube')
         MONGO_URI = 'ec2-13-60-157-254.eu-north-1.compute.amazonaws.com'
         MONGO_DB = 'capstone_2026'
-        REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\.git\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
+        REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\\\.git\\\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
         MONGO_COLLECTION = "\${REPO_NAME}_sonar_analysis"
         SUGGESTION_COLLECTION = "\${REPO_NAME}_AI_Suggestions"
         SONAR_SCANNER_PATH = '/opt/sonar-scanner/bin'
