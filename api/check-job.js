@@ -1,5 +1,5 @@
 // api/check-job.js
-const JENKINS_URL = process.env.JENKINS_URL || "http://13.61.15.150:8080";
+const JENKINS_URL = process.env.JENKINS_URL || "http://13.48.43.78:8080";
 const JENKINS_USER = process.env.JENKINS_USER || "vercel-deployer";
 const JENKINS_API_TOKEN = process.env.JENKINS_API_TOKEN || "11c91008d123dd22189e5e7fd20894ee5b";
 
