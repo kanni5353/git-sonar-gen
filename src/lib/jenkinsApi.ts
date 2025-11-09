@@ -1,4 +1,4 @@
-const JENKINS_URL = "http://13.48.43.78:8080";
+const JENKINS_URL = "http://13.60.31.8:8080";
 
 interface JenkinsJobConfig {
   repoUrl: string;
@@ -186,9 +186,9 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = 'http://16.170.157.163:9000'
+        SONAR_HOST_URL = 'http://13.60.198.241:9000'
         SONAR_AUTH_TOKEN = credentials('sonarqube')
-        MONGO_URI = 'ec2-13-60-157-254.eu-north-1.compute.amazonaws.com'
+        MONGO_URI = 'ec2-16-171-44-23.eu-north-1.compute.amazonaws.com:27017'
         MONGO_DB = 'capstone_2026'
         REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\.git\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
         MONGO_COLLECTION = "\${REPO_NAME}_sonar_analysis"
