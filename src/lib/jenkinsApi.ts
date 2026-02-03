@@ -139,6 +139,8 @@ const jenkinsApi = {
 
   /**
    * Generate Jenkins job configuration XML
+   * Note: Uses $\{ instead of \${ for Groovy variables within TypeScript template literals.
+   * This prevents TypeScript from parsing Groovy expressions as template literals.
    */
   generateJobConfig(params: JenkinsJobConfig): string {
     const { repoUrl, email } = params;
