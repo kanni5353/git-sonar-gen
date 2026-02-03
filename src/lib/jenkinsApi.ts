@@ -120,11 +120,13 @@ const jenkinsApi = {
 
   /**
    * Get the Jenkins job URL
-   * Returns the public Jenkins URL for display purposes
+   * Returns the public Jenkins URL for display purposes only
+   * Note: This URL is for display in the UI (e.g., showing users where their job is)
+   * All actual API calls go through the backend proxy to avoid Mixed Content errors
    */
   getJobUrl(jobName: string): string {
-    // This returns the Jenkins URL for display only
-    // Actual API calls go through the backend proxy
+    // Display-only URL - not used for fetch/API calls
+    // If Jenkins is behind a proxy or using HTTPS in production, update this URL
     return `http://56.228.23.50:8080/job/${jobName}`;
   },
 };
