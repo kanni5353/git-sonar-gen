@@ -127,7 +127,7 @@ const jenkinsApi = {
   getJobUrl(jobName: string): string {
     // Display-only URL - not used for fetch/API calls
     // If Jenkins is behind a proxy or using HTTPS in production, update this URL
-    return `http://56.228.23.50:8080/job/${jobName}`;
+    return `http://51.20.32.30:8080/job/${jobName}`;
   },
 };
 
