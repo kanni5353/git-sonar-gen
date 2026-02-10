@@ -1,5 +1,5 @@
 // api/trigger.js
-const JENKINS_URL = process.env.JENKINS_URL || "http://51.20.32.30:8080";
+const JENKINS_URL = process.env.JENKINS_URL || "http://13.60.62.157:8080";
 const JENKINS_USER = process.env.JENKINS_USER || "vercel-deployer";
 const JENKINS_API_TOKEN = process.env.JENKINS_API_TOKEN || "11c91008d123dd22189e5e7fd20894ee5b";
 
