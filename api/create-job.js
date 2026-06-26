@@ -1,5 +1,5 @@
 // api/create-job.js
-const JENKINS_URL = process.env.JENKINS_URL || "http://13.60.53.251:8080";
+const JENKINS_URL = process.env.JENKINS_URL || "http://16.170.244.81";
 const JENKINS_USER = process.env.JENKINS_USER || "vercel-deployer";
 const JENKINS_API_TOKEN = process.env.JENKINS_API_TOKEN || "11c91008d123dd22189e5e7fd20894ee5b";
 
@@ -46,11 +46,11 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = 'http://13.60.210.69:9000'
+        SONAR_HOST_URL = 'http://51.20.66.96'
         SONAR_AUTH_TOKEN = credentials('sonarqube')
-        MONGO_URI = 'ec2-13-60-193-204.eu-north-1.compute.amazonaws.com:27017'
+        MONGO_URI = 'ec2-13-60-95-61.eu-north-1.compute.amazonaws.com:27017'
         MONGO_DB = 'SDP_2026'
-        REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\\\.git\\\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
+        REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\\\.git\\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
         MONGO_COLLECTION = "\${REPO_NAME}_sonar_analysis"
         SUGGESTION_COLLECTION = "\${REPO_NAME}_AI_Suggestions"
         SONAR_SCANNER_PATH = '/opt/sonar-scanner/bin'
@@ -152,7 +152,7 @@ alert_status" \
                         """
                     }
 
-                    echo "SonarQube JSON contents:";
+                    echo "SonarQube JSON contents";
                     sh "cat \${jsonFile}"
 
                     echo "Syncing to MongoDB..."
