@@ -46,8 +46,7 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = 'http://13.60.69.144
-:9000'
+        SONAR_HOST_URL = 'http://13.60.69.144:9000'
         SONAR_AUTH_TOKEN = credentials('sonarqube')
         MONGO_URI = 'ec2-51-21-194-102.eu-north-1.compute.amazonaws.com:27017'
         MONGO_DB = 'SDP_2026'
