@@ -1,5 +1,5 @@
 // api/create-job.js
-const JENKINS_URL = process.env.JENKINS_URL || "http://16.170.244.81:8080";
+const JENKINS_URL = process.env.JENKINS_URL || "http://13.60.221.245:8080";
 const JENKINS_USER = process.env.JENKINS_USER || "vercel-deployer";
 const JENKINS_API_TOKEN = process.env.JENKINS_API_TOKEN || "11c91008d123dd22189e5e7fd20894ee5b";
 
@@ -46,9 +46,10 @@ pipeline {
     agent any
 
     environment {
-        SONAR_HOST_URL = 'http://51.20.66.96:9000'
+        SONAR_HOST_URL = 'http://13.60.69.144
+:9000'
         SONAR_AUTH_TOKEN = credentials('sonarqube')
-        MONGO_URI = 'ec2-13-60-95-61.eu-north-1.compute.amazonaws.com:27017'
+        MONGO_URI = 'ec2-51-21-194-102.eu-north-1.compute.amazonaws.com:27017'
         MONGO_DB = 'SDP_2026'
         REPO_NAME = sh(script: "echo \${params.REPO_URL} | sed 's#.*/##' | sed 's#\\\\.git\\$##' | tr -cd '[:alnum:]_-'", returnStdout: true).trim()
         MONGO_COLLECTION = "\${REPO_NAME}_sonar_analysis"
